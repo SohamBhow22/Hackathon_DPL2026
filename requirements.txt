@@ -4,7 +4,7 @@ scipy
 scikit-learn
 matplotlib
 seaborn
-jupyter
-openpyxl
-pytest
 statsmodels
+jupyter
+pytest
+openpyxl
