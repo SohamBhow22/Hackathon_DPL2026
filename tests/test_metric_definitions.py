@@ -9,8 +9,10 @@ from src.features.metric_definitions import (
     derive_bowling_dot,
     derive_legal_delivery,
     derive_match_phase,
+    derive_wides,
+    derive_noball_extras,
+    derive_wide_noball_extras,
 )
-
 
 @pytest.fixture
 def sample_deliveries():
@@ -236,6 +238,9 @@ def test_add_metric_features_does_not_mutate_input(sample_deliveries):
         "bowling_dot",
         "bowler_credited_wicket",
         "match_phase",
+        "wides",
+        "noball_extras",
+        "wide_noball_extras",
     }
 
     assert expected_columns.issubset(result.columns)
@@ -245,3 +250,31 @@ def test_add_metric_features_does_not_mutate_input(sample_deliveries):
         result[original.columns],
         original,
     )
+
+def test_derive_wides():
+    df = pd.DataFrame({"wide": [0, 1, 0, 2, None]})
+
+    result = derive_wides(df)
+
+    assert result.tolist() == [0, 1, 0, 2, 0]
+
+
+def test_derive_noball_extras():
+    df = pd.DataFrame({"noball": [0, 0, 1, 2, None]})
+
+    result = derive_noball_extras(df)
+
+    assert result.tolist() == [0, 0, 1, 2, 0]
+
+
+def test_derive_wide_noball_extras():
+    df = pd.DataFrame(
+        {
+            "wide": [0, 1, 0, 2],
+            "noball": [0, 0, 1, 0],
+        }
+    )
+
+    result = derive_wide_noball_extras(df)
+
+    assert result.tolist() == [0, 1, 1, 2]

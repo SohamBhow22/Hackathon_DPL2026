@@ -180,6 +180,9 @@ def add_metric_features(df: pd.DataFrame) -> pd.DataFrame:
     result["match_phase"] = derive_match_phase(result)
     result["boundary_ball"] = derive_boundary_ball(result)
     result["boundary_runs"] = derive_boundary_runs(result)
+    result["wides"] = derive_wides(result)
+    result["noball_extras"] = derive_noball_extras(result)
+    result["wide_noball_extras"] = derive_wide_noball_extras(result)
 
     return result
 
@@ -214,3 +217,23 @@ def derive_boundary_runs(df: pd.DataFrame) -> pd.Series:
         df["batruns"].isin([4, 6]),
         0,
     )
+
+def derive_wides(df: pd.DataFrame) -> pd.Series:
+    """Return the recorded wide extras for each delivery."""
+    if "wide" not in df.columns:
+        raise ValueError("Missing required columns: ['wide']")
+
+    return df["wide"].fillna(0)
+
+
+def derive_noball_extras(df: pd.DataFrame) -> pd.Series:
+    """Return the recorded no-ball extras for each delivery."""
+    if "noball" not in df.columns:
+        raise ValueError("Missing required columns: ['noball']")
+
+    return df["noball"].fillna(0)
+
+
+def derive_wide_noball_extras(df: pd.DataFrame) -> pd.Series:
+    """Return combined wide and no-ball extras for each delivery."""
+    return derive_wides(df) + derive_noball_extras(df)

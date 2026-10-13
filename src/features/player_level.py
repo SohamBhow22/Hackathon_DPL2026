@@ -124,6 +124,11 @@ def build_player_season_bowling(
         "legal_delivery",
         "bowling_dot",
         "bowler_credited_wicket",
+        "boundary_ball",
+        "boundary_runs",
+        "wides",
+        "noball_extras",
+        "wide_noball_extras",
     }
 
     missing_columns = required_columns - set(df.columns)
@@ -133,7 +138,7 @@ def build_player_season_bowling(
             f"Missing required columns: {sorted(missing_columns)}"
         )
 
-    # Aggregate counts at player-season grain.
+    # Aggregate underlying counts at player-season grain.
     bowling = (
         df.groupby(
             PLAYER_SEASON_BOWLING_KEYS,
@@ -146,6 +151,14 @@ def build_player_season_bowling(
             legal_balls=("legal_delivery", "sum"),
             dot_balls=("bowling_dot", "sum"),
             wickets=("bowler_credited_wicket", "sum"),
+            boundary_balls=("boundary_ball", "sum"),
+            boundary_runs_conceded=("boundary_runs", "sum"),
+            wides_conceded=("wides", "sum"),
+            noball_extras_conceded=("noball_extras", "sum"),
+            wide_noball_extras_conceded=(
+                "wide_noball_extras",
+                "sum",
+            ),
         )
     )
 
@@ -153,6 +166,8 @@ def build_player_season_bowling(
     valid_legal_balls = bowling["legal_balls"].where(
         bowling["legal_balls"] != 0
     )
+
+    bowling["overs_bowled"] = bowling["legal_balls"] / 6
 
     bowling["economy_rate"] = (
         bowling["runs_conceded"]
@@ -172,6 +187,20 @@ def build_player_season_bowling(
         .mul(100)
     )
 
+    bowling["boundary_balls_per_100_legal_balls"] = (
+        bowling["boundary_balls"]
+        .div(valid_legal_balls)
+        .mul(100)
+    )
+
+    bowling["extras_per_20_overs"] = (
+        bowling["wide_noball_extras_conceded"]
+        .div(bowling["overs_bowled"].where(
+            bowling["overs_bowled"] != 0
+        ))
+        .mul(20)
+    )
+
     # Enforce the expected analytical grain.
     if bowling.duplicated(PLAYER_SEASON_BOWLING_KEYS).any():
         raise ValueError(
@@ -179,6 +208,7 @@ def build_player_season_bowling(
         )
 
     return bowling
+
 
 def build_player_season_phase_batting(
     df: pd.DataFrame,
@@ -271,6 +301,11 @@ def build_player_season_phase_bowling(
         "legal_delivery",
         "bowling_dot",
         "bowler_credited_wicket",
+        "boundary_ball",
+        "boundary_runs",
+        "wides",
+        "noball_extras",
+        "wide_noball_extras",
     }
 
     missing_columns = required_columns - set(df.columns)
@@ -280,7 +315,7 @@ def build_player_season_phase_bowling(
             f"Missing required columns: {sorted(missing_columns)}"
         )
 
-    # Aggregate counts at player-season-phase grain.
+    # Aggregate underlying counts at player-season-phase grain.
     bowling = (
         df.groupby(
             PLAYER_SEASON_PHASE_BOWLING_KEYS,
@@ -293,6 +328,14 @@ def build_player_season_phase_bowling(
             legal_balls=("legal_delivery", "sum"),
             dot_balls=("bowling_dot", "sum"),
             wickets=("bowler_credited_wicket", "sum"),
+            boundary_balls=("boundary_ball", "sum"),
+            boundary_runs_conceded=("boundary_runs", "sum"),
+            wides_conceded=("wides", "sum"),
+            noball_extras_conceded=("noball_extras", "sum"),
+            wide_noball_extras_conceded=(
+                "wide_noball_extras",
+                "sum",
+            ),
         )
     )
 
@@ -300,6 +343,8 @@ def build_player_season_phase_bowling(
     valid_legal_balls = bowling["legal_balls"].where(
         bowling["legal_balls"] != 0
     )
+
+    bowling["overs_bowled"] = bowling["legal_balls"] / 6
 
     bowling["economy_rate"] = (
         bowling["runs_conceded"]
@@ -317,6 +362,20 @@ def build_player_season_phase_bowling(
         bowling["wickets"]
         .div(valid_legal_balls)
         .mul(100)
+    )
+
+    bowling["boundary_balls_per_100_legal_balls"] = (
+        bowling["boundary_balls"]
+        .div(valid_legal_balls)
+        .mul(100)
+    )
+
+    bowling["extras_per_20_overs"] = (
+        bowling["wide_noball_extras_conceded"]
+        .div(bowling["overs_bowled"].where(
+            bowling["overs_bowled"] != 0
+        ))
+        .mul(20)
     )
 
     # Enforce the expected analytical grain.
